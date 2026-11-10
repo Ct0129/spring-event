@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日簽到</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* ===== 1. 基本設定 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang TC", "Noto Sans TC", sans-serif;
+    background: #8a8a8a;              /* 模擬被遮罩蓋住的背景 */
+    min-height: 100vh;
+    display: flex;                    /* 讓彈窗置中 */
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* ===== 2. 彈窗本體 ===== */
+  .modal {
+    position: relative;
+    width: 340px;
+    background: #fbf3e4;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  /* ===== 3. 頂部插畫區（先用色塊佔位，之後換成匯出的圖片） ===== */
+.banner-img {
+  width: 100%;      /* 寬度撐滿彈窗 */
+  display: block;   /* 避免圖片下方多出一條縫 */
+}
+  /* 換成圖片的寫法：
+     <img class="banner-img" src="banner.png" alt="每日簽到">
+     .banner-img { width: 100%; display: block; } */
+
+  /* ===== 4. 簽到狀態 ===== */
+  .status-img {
+  display: block;       /* 讓它獨佔一行，才能置中 */
+  margin: 20px auto 0;  /* 上方 24px，左右 auto 就是水平置中 */
+  height: 58px;         /* 填 Figma 這組圖的高度 */
+  width: auto;          /* 寬度依比例自動算 */
+}
+ /* ===== 5. DAY1~7 進度條 ===== */
+.days {
+  display: flex;
+  justify-content: space-between;   /* 7 個平均分散 */
+  padding: 20px 28.25px 0;             /* 上方距離、左右距離 */
+  position: relative;
+}
+.days::before {                      /* 後面那條連接線 */
+  content: "";
+  position: absolute;
+  left: 53px; right: 53px;           /* = 左右距離 + 圓圈半徑 */
+  top: 32px;                         /* = 上方距離 + 圓圈半徑 - 1 */
+  height: 2px;
+  background: #fbe9d8;
+}
+.day {
+  position: relative;
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  font-weight: 500;
+  font-size: 8px;
+  color: #5c2a12;
+                /* DAY 文字顏色 */
+}
+.day .dot {
+  width: 24px; height: 24px;         /* 圓圈直徑 */
+  margin-bottom: 4px;                /* 圓圈和文字的間距 */
+  border-radius: 50%;
+  background: #fbe9d8;               /* 數字圓圈的底色 */
+  color: #5c2a12;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.day.done .dot,
+.day.gift .dot { background: #fbf3e4; }   /* 用卡片底色，蓋住後面的線 */
+.day .dot img { width: 24px; height: 24px; display: block; }
+.day.milestone span { color: #edb93c; }   /* 第 3、7 天文字的黃色 */
+  .slogan {
+  display: block;        /* 獨佔一行，才能置中 */
+  width: 240px;          /* 填 Figma 這組圖的寬度 */
+  height: auto;          /* 高度依比例自動算，不會變形 */
+  margin: 30px auto 30px;
+}
+
+  /* ===== 7. 好禮列 ===== */
+.reward {
+  display: flex;
+  justify-content: space-between;   /* 圖片靠左，文字靠右 */
+  align-items: center;              /* 兩邊垂直置中 */
+  margin: 0 20px 14px;              /* 左右距離、下方距離 */
+}
+.reward-title {
+  display: block;
+  width: 140px;                     /* 填 Figma 左邊圖的寬度 */
+  height: auto;
+}
+.reward .state {
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+.reward .state b {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #53422B;            /* 好禮一、好禮二 */
+}
+.reward .state span {
+  display: block;
+  font-size: 12px;
+  color: #882408;            /* 待完成 */
+}
+.reward .state.got span {
+  color: #F86054;            /* 已獲得 */
+}
+  /* ===== 8. 底部按鈕 ===== */
+.corner {
+  position: absolute;
+  width: 36px;
+  pointer-events: none;
+}
+.corner.tl { top: 184px; left: 8px; }
+.corner.tr { top: 184px; right: 8px; transform: scaleX(-1); }
+.corner.bl { bottom: 10px; left: 8px; transform: scaleY(-1); }
+.corner.br { bottom: 10px; right: 8px; transform: scale(-1, -1); }
+.period {
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  font-weight: 700;          /* Bold */
+  font-size: 8px;
+  color: #53422B;            /* 先暫用，請換成 Figma 的色碼 */
+  text-align: center;
+  margin: 30px 0 0;          /* 上方 30px */
+  padding-bottom: 24px;      /* 先暫用，請換成 Figma 量到的下方距離 */
+}
+</style>
+</head>
+<body>
+
+<div class="modal">
+  <img class="corner tl" src="images/corner.png" alt="">
+  <img class="corner tr" src="images/corner.png" alt="">
+  <img class="corner bl" src="images/corner.png" alt="">
+  <img class="corner br" src="images/corner.png" alt="">
+
+  <img src="images/banner.png" style="width:100%; display:block;">
+
+  <img class="status-img" src="images/status_done_v2.svg" alt="已完成今日簽到">
+
+  <div class="days" id="days"></div>
+
+  <img class="slogan" src="images/text_slogan.png" alt="每天簽到不間斷，好禮拿不停！">
+
+  <div class="reward">
+    <img class="reward-title" src="images/img_reward_3day.png" alt="累積3日簽到 汽車30分鐘折抵券">
+    <div class="state" id="state1">
+      <b>好禮一</b>
+      <span></span>
+    </div>
+  </div>
+  <div class="reward">
+    <img class="reward-title" src="images/img_reward_7day.png" alt="累積7日簽到 汽車120分鐘折抵券">
+    <div class="state" id="state2">
+      <b>好禮二</b>
+      <span></span>
+    </div>
+  </div>
+
+  <p class="period">活動期間：2027/02/03-2027/02/10</p>
+</div>
+<script>
+  // ★ 已簽到幾天（只要改這個數字，1～7）
+  const signedDays = 4;
+
+  // ---------- 進度條 ----------
+  let html = "";
+  for (let day = 1; day <= 7; day++) {
+    const done = day <= signedDays;
+    let cls = "day";
+    let inside = day;
+
+    if (done) {
+  inside = '<img src="images/icon_day_done.svg" alt="">';
+  cls += " done";
+} else if (day === 3) {
+  inside = '<img src="images/icon_gift_yellow.svg" alt="">';
+  cls += " gift";
+} else if (day === 7) {
+  inside = '<img src="images/icon_gift_red.svg" alt="">';
+  cls += " gift";
+}
+    if (day === 3 || day === 7) cls += " milestone";
+
+    html += `<div class="${cls}"><div class="dot">${inside}</div><span>DAY ${day}</span></div>`;
+  }
+  document.getElementById("days").innerHTML = html;
+
+  // ---------- 好禮狀態 ----------
+  const rewards = [
+    { id: "state1", need: 3 },   // 好禮一：累積 3 天
+    { id: "state2", need: 7 }    // 好禮二：累積 7 天
+  ];
+  rewards.forEach(function (r) {
+    const box = document.getElementById(r.id);
+    const got = signedDays >= r.need;
+    box.classList.toggle("got", got);
+    box.querySelector("span").textContent = got ? "已獲得" : "待完成";
+  });
+// ---------- 依螢幕大小縮放整張卡片 ----------
+const REF_W = 375;      // 設計稿的手機螢幕寬度
+const REF_H = 812;      // 設計稿的手機螢幕高度
+const MAX_SCALE = 1;    // 最多放大幾倍（1 = 不放大，iPad 維持原尺寸）
+
+function fitCard() {
+  const card = document.querySelector(".modal");
+  const w = document.documentElement.clientWidth;
+  const h = document.documentElement.clientHeight;
+  const scale = Math.min(w / REF_W, h / REF_H, MAX_SCALE);
+  card.style.zoom = scale;
+}
+fitCard();
+window.addEventListener("resize", fitCard);
+</script>
+</body>
+</html>
